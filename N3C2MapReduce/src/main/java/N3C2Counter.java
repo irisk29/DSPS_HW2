@@ -5,6 +5,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -20,8 +21,9 @@ public class N3C2Counter {
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
             StringTokenizer itrTokenizedValue = new StringTokenizer(value.toString(), "\t");
             // gets the three hebrew words
-            String[] trigramWords = itrTokenizedValue.nextToken().split(",");
+            String[] trigramWords = itrTokenizedValue.nextToken().split(" ");
             Trigram trigram = new Trigram(trigramWords[0], trigramWords[1], trigramWords[2]);
+            System.out.println("got new trigram in mapper: " + trigram);
             // create the <w1,w2,*> key
             Trigram w1w2 = new Trigram(trigram.getW1(), trigram.getW2(), "*");
             // count the <w1,w2,w3> and <w1,w2> appearances
@@ -39,6 +41,7 @@ public class N3C2Counter {
                 countSum += count.get();
             }
             context.write(trigram, new IntWritable(countSum));
+            System.out.println("finish combining local trigram: " + trigram.toString());
         }
     }
 
@@ -61,9 +64,12 @@ public class N3C2Counter {
             // if <w1,w2,*>, we will update C2 for the next <w1,w2,w3>
             // else, we emit the saved C2 and the counterSum (N3)
             String[] trigramWords = trigram.toString().split(",");
-            if (trigramWords[2].equals("*"))
+            if (trigramWords[2].equals("*")) {
+                System.out.println("reducer got new trigram <w1,w2,*>: " + trigram.toString());
                 this.C2.set(countSum);
+            }
             else {
+                System.out.println("reducer got new trigram <w1,w2,w3>: " + trigram.toString());
                 ProbabilityParameters probabilityParameters = new ProbabilityParameters();
                 probabilityParameters.setC2(this.C2);
                 probabilityParameters.setN3(new IntWritable(countSum));
@@ -98,12 +104,15 @@ public class N3C2Counter {
         job.setOutputKeyClass(Trigram.class);
         job.setOutputValueClass(ProbabilityParameters.class);
 
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        System.out.println("input path: " + args[1]);
+        System.out.println("output path: " + args[2]);
+        FileInputFormat.addInputPath(job, new Path(args[1]));
+        FileOutputFormat.setOutputPath(job, new Path(args[2]));
 
-//        job.setInputFormatClass(XXX.class);
-//        job.setOutputFormatClass(TextOutputFormat.class);
+        job.setInputFormatClass(TextInputFormat.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
 
+        System.out.println("Finished configure N3C2 job, start executing!");
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }

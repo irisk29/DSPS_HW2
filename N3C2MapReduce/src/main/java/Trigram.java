@@ -9,6 +9,12 @@ public class Trigram implements WritableComparable<Trigram> {
     private String w2;
     private String w3;
 
+    public Trigram() {
+        this.w1 = "?";
+        this.w2 = "?";
+        this.w3 = "?";
+    }
+
     public Trigram(String w1, String w2, String w3) {
         this.w1 = w1;
         this.w2 = w2;
