@@ -1,6 +1,7 @@
+package ProbabilityParameters;
+
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -20,6 +21,15 @@ public class ProbabilityParameters implements Writable {
         this.C0 = new IntWritable();
         this.C1 = new IntWritable();
         this.C2 = new IntWritable();
+    }
+
+    public ProbabilityParameters(IntWritable N1, IntWritable N2, IntWritable N3, IntWritable C0, IntWritable C1, IntWritable C2) {
+        this.N1 = N1;
+        this.N2 = N2;
+        this.N3 = N3;
+        this.C0 = C0;
+        this.C1 = C1;
+        this.C2 = C2;
     }
 
     public IntWritable getN1() {
@@ -90,13 +100,7 @@ public class ProbabilityParameters implements Writable {
 
     @Override
     public String toString() {
-        return "ProbabilityParameters{" +
-                "N1=" + N1 +
-                ", N2=" + N2 +
-                ", N3=" + N3 +
-                ", C0=" + C0 +
-                ", C1=" + C1 +
-                ", C2=" + C2 +
-                '}';
+        return this.N1.toString() + "," + this.N2.toString() + "," + this.N3.toString()
+                + "," + this.C0.toString() + "," + this.C1.toString() + "," + this.C2.toString();
     }
 }

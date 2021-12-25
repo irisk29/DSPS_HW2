@@ -5,10 +5,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
 import com.amazonaws.services.elasticmapreduce.model.*;
-import com.amazonaws.services.elasticmapreduce.util.StepFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class TrigramWordPrediction {
     public static void main(String[] argv) {
@@ -29,21 +26,18 @@ public class TrigramWordPrediction {
                 .build();
 
         // creating map reduces steps for calculating the probabilities
-        String jarUrl = "s3://trigramwordprediction/N3C2MapReduce.jar", mainClass = "N3C2Counter";
+        String jarUrl = "s3://trigramwordprediction/EMRWordPrediction.jar";
 //        String inputPath = "s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data";
         String inputPath = "s3://trigramwordprediction/ourinput.txt";
-        String outputPath = "s3://trigramwordprediction/output";
+        String outputPath = "s3://trigramwordprediction";
         HadoopJarStepConfig hadoopJarStep = new HadoopJarStepConfig()
                 .withJar(jarUrl) // This should be a full map reduce application.
-                .withMainClass(mainClass)
+                .withMainClass("Main")
                 .withArgs(inputPath, outputPath);
-        StepConfig n3c2counterStep = new StepConfig()
-                .withName("Counter N3 And C2")
+        StepConfig emrWordPrediction = new StepConfig()
+                .withName("EMR Word Predication")
                 .withActionOnFailure("TERMINATE_JOB_FLOW")
                 .withHadoopJarStep(hadoopJarStep);
-
-        List<StepConfig> steps = new ArrayList<>();
-        steps.add(n3c2counterStep);
 
         // specify applications to be installed and configured when EMR creates the cluster
         Application hive = new Application().withName("Hive");
@@ -55,7 +49,7 @@ public class TrigramWordPrediction {
         RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName("MyClusterCreatedFromJava")
                 .withReleaseLabel("emr-6.4.0") // specifies the EMR release version label, we recommend the latest release
-                .withSteps(steps)
+                .withSteps(emrWordPrediction)
                 .withApplications(hive,spark,ganglia,zeppelin)
                 .withLogUri("s3://trigramwordpredictionlogs") // a URI in S3 for log files is required when debugging is enabled
                 .withServiceRole("EMR_DefaultRole") // replace the default with a custom IAM service role if one is used
