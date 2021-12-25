@@ -28,18 +28,11 @@ public class TrigramWordPrediction {
                 .withRegion(Regions.US_EAST_1)
                 .build();
 
-        // create a step to enable debugging in the AWS Management Console
-        StepFactory stepFactory = new StepFactory();
-        StepConfig enabledebugging = new StepConfig()
-                .withName("Enable debugging")
-                .withActionOnFailure("TERMINATE_JOB_FLOW")
-                .withHadoopJarStep(stepFactory.newEnableDebuggingStep());
-
         // creating map reduces steps for calculating the probabilities
         String jarUrl = "s3://trigramwordprediction/N3C2MapReduce.jar", mainClass = "N3C2Counter";
 //        String inputPath = "s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data";
         String inputPath = "s3://trigramwordprediction/ourinput.txt";
-        String outputPath = "s3://trigramwordprediction/output.txt";
+        String outputPath = "s3://trigramwordprediction/output";
         HadoopJarStepConfig hadoopJarStep = new HadoopJarStepConfig()
                 .withJar(jarUrl) // This should be a full map reduce application.
                 .withMainClass(mainClass)
@@ -50,7 +43,6 @@ public class TrigramWordPrediction {
                 .withHadoopJarStep(hadoopJarStep);
 
         List<StepConfig> steps = new ArrayList<>();
-        steps.add(enabledebugging);
         steps.add(n3c2counterStep);
 
         // specify applications to be installed and configured when EMR creates the cluster
@@ -71,7 +63,7 @@ public class TrigramWordPrediction {
                 .withInstances(new JobFlowInstancesConfig()
                         .withEc2KeyName("dsps")
                         .withInstanceCount(3)
-                        .withKeepJobFlowAliveWhenNoSteps(true)
+                        .withKeepJobFlowAliveWhenNoSteps(false)
                         .withMasterInstanceType("m4.large")
                         .withSlaveInstanceType("m4.large"));
 

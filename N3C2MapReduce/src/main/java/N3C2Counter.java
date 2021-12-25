@@ -63,13 +63,12 @@ public class N3C2Counter {
             // check if this is <w1,w2,*> or <w1,w2,w3>
             // if <w1,w2,*>, we will update C2 for the next <w1,w2,w3>
             // else, we emit the saved C2 and the counterSum (N3)
-            String[] trigramWords = trigram.toString().split(",");
-            if (trigramWords[2].equals("*")) {
-                System.out.println("reducer got new trigram <w1,w2,*>: " + trigram.toString());
+            if (trigram.getW3().equals("*")) {
+                System.out.println("reducer got new trigram <w1,w2,*>: " + trigram);
                 this.C2.set(countSum);
             }
             else {
-                System.out.println("reducer got new trigram <w1,w2,w3>: " + trigram.toString());
+                System.out.println("reducer got new trigram <w1,w2,w3>: " + trigram);
                 ProbabilityParameters probabilityParameters = new ProbabilityParameters();
                 probabilityParameters.setC2(this.C2);
                 probabilityParameters.setN3(new IntWritable(countSum));

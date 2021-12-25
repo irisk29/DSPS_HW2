@@ -72,8 +72,10 @@ public class Trigram implements WritableComparable<Trigram> {
         if (compareRes != 0)
             return compareRes;
         // we define that * is smaller than everything for <w1,w2,*> to come before <w1,w2,w3>
-        if (this.w3.equals("*"))
+        if (this.w3.equals("*") && !other.getW3().equals("*"))
             return -1;
+        if (other.getW3().equals("*") && !this.w3.equals("*"))
+            return 1;
         // if not *, return the compareTo value by the last word
         return this.w3.compareTo(other.getW3());
     }

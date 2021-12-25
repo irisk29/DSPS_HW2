@@ -87,4 +87,16 @@ public class ProbabilityParameters implements Writable {
         out.writeInt(this.C1.get());
         out.writeInt(this.C2.get());
     }
+
+    @Override
+    public String toString() {
+        return "ProbabilityParameters{" +
+                "N1=" + N1 +
+                ", N2=" + N2 +
+                ", N3=" + N3 +
+                ", C0=" + C0 +
+                ", C1=" + C1 +
+                ", C2=" + C2 +
+                '}';
+    }
 }
