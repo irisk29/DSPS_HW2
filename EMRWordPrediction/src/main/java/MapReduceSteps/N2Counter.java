@@ -113,6 +113,6 @@ public class N2Counter {
         job.setInputFormatClass(N3C2TrigramInputFormat.class);
 
         System.out.println("Finished configure N2 job, start executing!");
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
     }
 }
