@@ -1,7 +1,10 @@
 package MapReduceSteps;
 
+import InputFormats.C1TrigramInputFormat;
 import InputFormats.N1C0C1InputFormat;
 import ProbabilityParameters.ProbabilityParameters;
+import Trigrams.TrigramC0;
+import Trigrams.TrigramC1;
 import Trigrams.TrigramN1C0C1;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -17,24 +20,25 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 
 public class C0Counter {
-    public static class MapperClass extends Mapper<TrigramN1C0C1, ProbabilityParameters, TrigramN1C0C1, ProbabilityParameters> {
+    public static class MapperClass extends Mapper<TrigramC1, ProbabilityParameters, TrigramC0, ProbabilityParameters> {
         private final static LongWritable one = new LongWritable(1);
 
         @Override
-        public void map(TrigramN1C0C1 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
-            TrigramN1C0C1 anyWord = new TrigramN1C0C1("*", "*", "*");
+        public void map(TrigramC1 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
+            TrigramC0 anyWord = new TrigramC0("*", "*", "*");
+            TrigramC0 trigramC0 = new TrigramC0(trigram.getW1(), trigram.getW2(), trigram.getW3());
             // save in counter the appearance of this words
             probabilityParameters.setC0(one);
             // count the <w1,w2,w3> <*,*,*> appearances
             context.write(anyWord, probabilityParameters);
-            context.write(trigram, probabilityParameters);
+            context.write(trigramC0, probabilityParameters);
 
         }
     }
 
-    public static class CombinerClass extends Reducer<TrigramN1C0C1, ProbabilityParameters, TrigramN1C0C1, ProbabilityParameters> {
+    public static class CombinerClass extends Reducer<TrigramC0, ProbabilityParameters, TrigramC0, ProbabilityParameters> {
         @Override
-        public void reduce(TrigramN1C0C1 trigram, Iterable<ProbabilityParameters> counts, Context context) throws IOException,  InterruptedException {
+        public void reduce(TrigramC0 trigram, Iterable<ProbabilityParameters> counts, Context context) throws IOException,  InterruptedException {
 
             ProbabilityParameters updatedProbabilityParameters = null;
             if(trigram.getW1().equals("*"))
@@ -55,14 +59,14 @@ public class C0Counter {
         }
     }
 
-    public static class ReducerClass extends Reducer<TrigramN1C0C1, ProbabilityParameters, TrigramN1C0C1, ProbabilityParameters> {
+    public static class ReducerClass extends Reducer<TrigramC0, ProbabilityParameters, TrigramC0, ProbabilityParameters> {
         private long C0 = 0;
 
         @Override
         public void setup(Context context){}
 
         @Override
-        public void reduce(TrigramN1C0C1 trigram, Iterable<ProbabilityParameters> counts, Context context) throws IOException, InterruptedException {
+        public void reduce(TrigramC0 trigram, Iterable<ProbabilityParameters> counts, Context context) throws IOException, InterruptedException {
             if(trigram.getW1().equals("*")) //<*,*,*>
             {
                 for (ProbabilityParameters probabilityParameters : counts) {
@@ -78,9 +82,9 @@ public class C0Counter {
         }
     }
 
-    public static class PartitionerClass extends Partitioner<TrigramN1C0C1, ProbabilityParameters> {
+    public static class PartitionerClass extends Partitioner<TrigramC0, ProbabilityParameters> {
         @Override
-        public int getPartition(TrigramN1C0C1 trigram, ProbabilityParameters count, int numPartitions) {
+        public int getPartition(TrigramC0 trigram, ProbabilityParameters count, int numPartitions) {
             return 0;
         }
     }
@@ -96,15 +100,15 @@ public class C0Counter {
         job.setCombinerClass(C0Counter.CombinerClass.class);
         job.setReducerClass(C0Counter.ReducerClass.class);
 
-        job.setMapOutputKeyClass(TrigramN1C0C1.class);
+        job.setMapOutputKeyClass(TrigramC0.class);
         job.setMapOutputValueClass(ProbabilityParameters.class);
-        job.setOutputKeyClass(TrigramN1C0C1.class);
+        job.setOutputKeyClass(TrigramC0.class);
         job.setOutputValueClass(ProbabilityParameters.class);
 
         FileInputFormat.addInputPath(job, new Path(inputPath));
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
-        job.setInputFormatClass(N1C0C1InputFormat.class);
+        job.setInputFormatClass(C1TrigramInputFormat.class);
 
         System.out.println("Finished configure C0 job, start executing!");
         job.waitForCompletion(true);

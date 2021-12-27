@@ -1,7 +1,9 @@
 package MapReduceSteps;
 
+import InputFormats.C0TrigramInputFormat;
 import InputFormats.N1C0C1InputFormat;
 import ProbabilityParameters.ProbabilityParameters;
+import Trigrams.TrigramC0;
 import Trigrams.TrigramN1C0C1;
 import Trigrams.TrigramResult;
 import org.apache.hadoop.conf.Configuration;
@@ -16,10 +18,10 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 
 public class SortResult {
-    public static class MapperClass extends Mapper<TrigramN1C0C1, ProbabilityParameters, TrigramResult, DoubleWritable> {
+    public static class MapperClass extends Mapper<TrigramC0, ProbabilityParameters, TrigramResult, DoubleWritable> {
 
         @Override
-        public void map(TrigramN1C0C1 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
+        public void map(TrigramC0 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
             TrigramResult resTri = new TrigramResult(trigram.getW1(), trigram.getW2(), trigram.getW3());
             long n1 = probabilityParameters.getN1().get();
             long n2 = probabilityParameters.getN2().get();
@@ -52,7 +54,7 @@ public class SortResult {
         FileInputFormat.addInputPath(job, new Path(inputPath));
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
-        job.setInputFormatClass(N1C0C1InputFormat.class);
+        job.setInputFormatClass(C0TrigramInputFormat.class);
 
         System.out.println("Finished configure Sort job, start executing!");
         System.exit(job.waitForCompletion(true) ? 0 : 1);
