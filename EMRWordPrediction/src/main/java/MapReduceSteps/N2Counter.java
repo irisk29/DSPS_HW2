@@ -7,6 +7,7 @@ import Trigrams.TrigramN3C2;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
@@ -18,7 +19,7 @@ import java.io.IOException;
 
 public class N2Counter {
     public static class MapperClass extends Mapper<TrigramN3C2, ProbabilityParameters, TrigramN2, ProbabilityParameters> {
-        private final static IntWritable one = new IntWritable(1);
+        private final static LongWritable one = new LongWritable(1);
 
         @Override
         public void map(TrigramN3C2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
@@ -38,21 +39,21 @@ public class N2Counter {
         @Override
         public void reduce(TrigramN2 trigram, Iterable<ProbabilityParameters> counts, Context context) throws IOException,  InterruptedException {
             // sum all counts we receive for the trigram in our local device
-            int n2CountSum = 0;
+            long n2CountSum = 0;
             ProbabilityParameters updatedProbabilityParameters = null;
             for (ProbabilityParameters probabilityParameters : counts) {
                 updatedProbabilityParameters = probabilityParameters;
                 n2CountSum += probabilityParameters.getN2().get();
             }
             assert updatedProbabilityParameters != null;
-            updatedProbabilityParameters.setN2(new IntWritable(n2CountSum));
+            updatedProbabilityParameters.setN2(new LongWritable(n2CountSum));
             context.write(trigram, updatedProbabilityParameters);
             System.out.println("finish combining local trigram: " + trigram.toString());
         }
     }
 
     public static class ReducerClass extends Reducer<TrigramN2, ProbabilityParameters, TrigramN2, ProbabilityParameters> {
-        private IntWritable N2 = new IntWritable();
+        private LongWritable N2 = new LongWritable();
 
         @Override
         public void setup(Context context) {
@@ -62,7 +63,7 @@ public class N2Counter {
         @Override
         public void reduce(TrigramN2 trigram, Iterable<ProbabilityParameters> counts, Context context) throws IOException, InterruptedException {
             // sum all counts we receive for the trigram
-            int n2CountSum = 0;
+            long n2CountSum = 0;
             ProbabilityParameters updatedProbabilityParameters = null;
             for (ProbabilityParameters probabilityParameters : counts) {
                 updatedProbabilityParameters = probabilityParameters;
@@ -77,7 +78,7 @@ public class N2Counter {
             else {
                 System.out.println("reducer got new trigram <w1,w2,w3>: " + trigram);
                 assert updatedProbabilityParameters != null;
-                updatedProbabilityParameters.setN2(new IntWritable(n2CountSum));
+                updatedProbabilityParameters.setN2(new LongWritable(n2CountSum));
                 context.write(trigram, updatedProbabilityParameters);
             }
         }

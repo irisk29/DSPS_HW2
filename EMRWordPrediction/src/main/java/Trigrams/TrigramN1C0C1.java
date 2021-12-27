@@ -28,17 +28,4 @@ public class TrigramN1C0C1 extends AbstractTrigram {
             return 1;
         return this.w1.compareTo(other.getW1());
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if(obj.getClass() !=  TrigramN1C0C1.class)
-            return false;
-        TrigramN1C0C1 other = (TrigramN1C0C1) obj;
-        return other.getW1().equals(this.w1) && other.getW2().equals(this.w2) && other.getW3().equals(this.w3);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(w1,w2,w3);
-    }
 }

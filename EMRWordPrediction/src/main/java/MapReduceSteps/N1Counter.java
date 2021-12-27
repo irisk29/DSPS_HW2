@@ -7,6 +7,7 @@ import Trigrams.TrigramN2;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
@@ -15,11 +16,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 public class N1Counter {
     public static class MapperClass extends Mapper<TrigramN2, ProbabilityParameters, TrigramN1C0C1, ProbabilityParameters> {
-        private final static IntWritable one = new IntWritable(1);
+        private final static LongWritable one = new LongWritable(1);
 
         @Override
         public void map(TrigramN2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
@@ -43,13 +43,13 @@ public class N1Counter {
             ProbabilityParameters updatedProbabilityParameters = null;
             if(trigram.getW1().equals("*") && !trigram.getW3().equals("*")) //<*,*,w3>
             {
-                int n1CounterSum = 0;
+                long n1CounterSum = 0;
                 for (ProbabilityParameters probabilityParameters : counts) {
                     updatedProbabilityParameters = probabilityParameters;
                     n1CounterSum += probabilityParameters.getN1().get();
                 }
                 assert updatedProbabilityParameters != null;
-                updatedProbabilityParameters.setN1(new IntWritable(n1CounterSum));
+                updatedProbabilityParameters.setN1(new LongWritable(n1CounterSum));
                 context.write(trigram, updatedProbabilityParameters);
             }
             else
@@ -60,7 +60,7 @@ public class N1Counter {
     }
 
     public static class ReducerClass extends Reducer<TrigramN1C0C1, ProbabilityParameters, TrigramN1C0C1, ProbabilityParameters> {
-        private int N1 = 0;
+        private long N1 = 0;
         @Override
         public void setup(Context context){}
 
@@ -75,7 +75,7 @@ public class N1Counter {
             else //<w1,w2,w3>
             {
                 ProbabilityParameters probabilityParameters = counts.iterator().next();
-                probabilityParameters.setN1(new IntWritable(N1));
+                probabilityParameters.setN1(new LongWritable(N1));
                 context.write(trigram, probabilityParameters);
             }
         }

@@ -3,7 +3,6 @@ package MapReduceSteps;
 import ProbabilityParameters.ProbabilityParameters;
 import Trigrams.TrigramN3C2;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
@@ -16,8 +15,8 @@ import java.util.StringTokenizer;
 
 public class N3C2Counter {
 
-    public static class MapperClass extends Mapper<LongWritable, Text, TrigramN3C2, IntWritable> {
-        private final static IntWritable one = new IntWritable(1);
+    public static class MapperClass extends Mapper<LongWritable, Text, TrigramN3C2, LongWritable> {
+        private final static LongWritable one = new LongWritable(1);
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
@@ -34,21 +33,21 @@ public class N3C2Counter {
         }
     }
 
-    public static class CombinerClass extends Reducer<TrigramN3C2,IntWritable,TrigramN3C2,IntWritable> {
+    public static class CombinerClass extends Reducer<TrigramN3C2,LongWritable,TrigramN3C2,LongWritable> {
         @Override
-        public void reduce(TrigramN3C2 trigram, Iterable<IntWritable> counts, Context context) throws IOException,  InterruptedException {
+        public void reduce(TrigramN3C2 trigram, Iterable<LongWritable> counts, Context context) throws IOException,  InterruptedException {
             // sum all counts we receive for the Trigrams.TrigramN3C2 in our local device
-            int countSum = 0;
-            for (IntWritable count : counts) {
+            long countSum = 0;
+            for (LongWritable count : counts) {
                 countSum += count.get();
             }
-            context.write(trigram, new IntWritable(countSum));
+            context.write(trigram, new LongWritable(countSum));
             System.out.println("finish combining local Trigrams.TrigramN3C2: " + trigram.toString());
         }
     }
 
-    public static class ReducerClass extends Reducer<TrigramN3C2,IntWritable,TrigramN3C2, ProbabilityParameters> {
-        private IntWritable C2 = new IntWritable();
+    public static class ReducerClass extends Reducer<TrigramN3C2,LongWritable,TrigramN3C2, ProbabilityParameters> {
+        private LongWritable C2 = new LongWritable();
 
         @Override
         public void setup(Context context) {
@@ -56,10 +55,10 @@ public class N3C2Counter {
         }
 
         @Override
-        public void reduce(TrigramN3C2 trigram, Iterable<IntWritable> counts, Context context) throws IOException, InterruptedException {
+        public void reduce(TrigramN3C2 trigram, Iterable<LongWritable> counts, Context context) throws IOException, InterruptedException {
             // sum all counts we receive for the Trigrams.TrigramN3C2
-            int countSum = 0;
-            for (IntWritable count : counts) {
+            long countSum = 0;
+            for (LongWritable count : counts) {
                 countSum += count.get();
             }
             // check if this is <w1,w2,*> or <w1,w2,w3>
@@ -73,15 +72,15 @@ public class N3C2Counter {
                 System.out.println("reducer got new Trigrams.TrigramN3C2 <w1,w2,w3>: " + trigram);
                 ProbabilityParameters probabilityParameters = new ProbabilityParameters();
                 probabilityParameters.setC2(this.C2);
-                probabilityParameters.setN3(new IntWritable(countSum));
+                probabilityParameters.setN3(new LongWritable(countSum));
                 context.write(trigram, probabilityParameters);
             }
         }
     }
 
-    public static class PartitionerClass extends Partitioner<TrigramN3C2, IntWritable> {
+    public static class PartitionerClass extends Partitioner<TrigramN3C2, LongWritable> {
         @Override
-        public int getPartition(TrigramN3C2 trigram, IntWritable count, int numPartitions) {
+        public int getPartition(TrigramN3C2 trigram, LongWritable count, int numPartitions) {
             // we want all TrigramN3C2s that start with the same w1,w2 go to the same reducer
             // <w1,w2,*>, <w1,w2,w3>, <w1,w2,w4> - to reducer 1
             // <w5,w6,*>, <w5,w6,w7>, <w5,w6,w8> - to reducer 2
@@ -101,7 +100,7 @@ public class N3C2Counter {
         job.setReducerClass(ReducerClass.class);
 
         job.setMapOutputKeyClass(TrigramN3C2.class);
-        job.setMapOutputValueClass(IntWritable.class);
+        job.setMapOutputValueClass(LongWritable.class);
         job.setOutputKeyClass(TrigramN3C2.class);
         job.setOutputValueClass(ProbabilityParameters.class);
 

@@ -6,6 +6,7 @@ import Trigrams.TrigramN1C0C1;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
@@ -17,14 +18,14 @@ import java.io.IOException;
 
 public class C0Counter {
     public static class MapperClass extends Mapper<TrigramN1C0C1, ProbabilityParameters, TrigramN1C0C1, ProbabilityParameters> {
-        private final static IntWritable one = new IntWritable(1);
+        private final static LongWritable one = new LongWritable(1);
 
         @Override
         public void map(TrigramN1C0C1 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
             TrigramN1C0C1 anyWord = new TrigramN1C0C1("*", "*", "*");
             // save in counter the appearance of this words
             probabilityParameters.setC0(one);
-            // count the <w1,w2,w3> <*,*,w3> appearances
+            // count the <w1,w2,w3> <*,*,*> appearances
             context.write(anyWord, probabilityParameters);
             context.write(trigram, probabilityParameters);
 
@@ -44,7 +45,7 @@ public class C0Counter {
                     c0CounterSum += probabilityParameters.getC0().get();
                 }
                 assert updatedProbabilityParameters != null;
-                updatedProbabilityParameters.setC0(new IntWritable(c0CounterSum));
+                updatedProbabilityParameters.setC0(new LongWritable(c0CounterSum));
                 context.write(trigram, updatedProbabilityParameters);
             }
             else
@@ -55,7 +56,7 @@ public class C0Counter {
     }
 
     public static class ReducerClass extends Reducer<TrigramN1C0C1, ProbabilityParameters, TrigramN1C0C1, ProbabilityParameters> {
-        private int C0 = 0;
+        private long C0 = 0;
 
         @Override
         public void setup(Context context){}
@@ -71,7 +72,7 @@ public class C0Counter {
             else //<w1,w2,w3>
             {
                 ProbabilityParameters probabilityParameters = counts.iterator().next();
-                probabilityParameters.setC0(new IntWritable(C0));
+                probabilityParameters.setC0(new LongWritable(C0));
                 context.write(trigram, probabilityParameters);
             }
         }
@@ -106,6 +107,6 @@ public class C0Counter {
         job.setInputFormatClass(N1C0C1InputFormat.class);
 
         System.out.println("Finished configure C0 job, start executing!");
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.waitForCompletion(true);
     }
 }
