@@ -10,27 +10,28 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Partitioner;
-import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.Task;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
 
 public class C0Counter {
+    static enum c0Counter { TOTAL_WORDS }
     public static class MapperClass extends Mapper<TrigramC1, ProbabilityParameters, TrigramC0, ProbabilityParameters> {
         private final static LongWritable one = new LongWritable(1);
 
         @Override
         public void map(TrigramC1 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
-            TrigramC0 anyWord = new TrigramC0("*", "*", "*");
+            //TrigramC0 anyWord = new TrigramC0("*", "*", "*");
             TrigramC0 trigramC0 = new TrigramC0(trigram.getW1(), trigram.getW2(), trigram.getW3());
             // save in counter the appearance of this words
             probabilityParameters.setC0(one);
             // count the <w1,w2,w3> <*,*,*> appearances
-            context.write(anyWord, probabilityParameters);
+            //context.write(anyWord, probabilityParameters);
+            context.getCounter(c0Counter.TOTAL_WORDS).increment(3);
             context.write(trigramC0, probabilityParameters);
 
         }
@@ -63,29 +64,28 @@ public class C0Counter {
         private long C0 = 0;
 
         @Override
-        public void setup(Context context){}
+        protected void setup(Context context) throws IOException, InterruptedException {
+            Configuration conf = context.getConfiguration();
+            Cluster cluster = new Cluster(conf);
+            Job currentJob = cluster.getJob(context.getJobID());
+            C0 = currentJob.getCounters().findCounter(c0Counter.TOTAL_WORDS).getValue();
+            System.out.println(C0);
+        }
 
         @Override
         public void reduce(TrigramC0 trigram, Iterable<ProbabilityParameters> counts, Context context) throws IOException, InterruptedException {
-            if(trigram.getW1().equals("*")) //<*,*,*>
-            {
-                for (ProbabilityParameters probabilityParameters : counts) {
-                    C0 += (probabilityParameters.getC0().get() * 3); //there are three words in every trigram
-                }
-            }
-            else //<w1,w2,w3>
-            {
-                ProbabilityParameters probabilityParameters = counts.iterator().next();
-                probabilityParameters.setC0(new LongWritable(C0));
-                context.write(trigram, probabilityParameters);
-            }
+            ProbabilityParameters probabilityParameters = counts.iterator().next();
+            probabilityParameters.setC0(new LongWritable(C0));
+            context.write(trigram, probabilityParameters);
         }
     }
 
     public static class PartitionerClass extends Partitioner<TrigramC0, ProbabilityParameters> {
         @Override
         public int getPartition(TrigramC0 trigram, ProbabilityParameters count, int numPartitions) {
-            return 0;
+
+            //return 0;
+            return (trigram.getW1().hashCode() + trigram.getW2().hashCode() + trigram.getW3().hashCode()) % numPartitions;
         }
     }
 
