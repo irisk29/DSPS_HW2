@@ -1,15 +1,12 @@
 package MapReduceSteps;
 
-import InputFormats.C0TrigramInputFormat;
-import InputFormats.N1C0C1InputFormat;
+import InputFormats.C0N1N2TrigramInputFormat;
 import ProbabilityParameters.ProbabilityParameters;
-import Trigrams.TrigramC0;
-import Trigrams.TrigramN1C0C1;
+import Trigrams.TrigramC0N1N2;
 import Trigrams.TrigramResult;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -18,10 +15,10 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 
 public class SortResult {
-    public static class MapperClass extends Mapper<TrigramC0, ProbabilityParameters, TrigramResult, DoubleWritable> {
+    public static class MapperClass extends Mapper<TrigramC0N1N2, ProbabilityParameters, TrigramResult, DoubleWritable> {
 
         @Override
-        public void map(TrigramC0 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
+        public void map(TrigramC0N1N2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
             TrigramResult resTri = new TrigramResult(trigram.getW1(), trigram.getW2(), trigram.getW3());
             long n1 = probabilityParameters.getN1().get();
             long n2 = probabilityParameters.getN2().get();
@@ -43,7 +40,7 @@ public class SortResult {
         Configuration conf = new Configuration();
 
         Job job = Job.getInstance(conf, "Sort Job");
-        job.setJarByClass(C0Counter.class);
+        job.setJarByClass(C0N1N2Counter.class);
 
         job.setMapperClass(SortResult.MapperClass.class);
         job.setNumReduceTasks(0);
@@ -54,7 +51,7 @@ public class SortResult {
         FileInputFormat.addInputPath(job, new Path(inputPath));
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
-        job.setInputFormatClass(C0TrigramInputFormat.class);
+        job.setInputFormatClass(C0N1N2TrigramInputFormat.class);
 
         System.out.println("Finished configure Sort job, start executing!");
         System.exit(job.waitForCompletion(true) ? 0 : 1);
