@@ -26,10 +26,10 @@ public class TrigramWordPrediction {
                 .build();
 
         // creating map reduces steps for calculating the probabilities
-        String jarUrl = "s3://trigramwordprediction/EMRWordPrediction.jar";
+        String jarUrl = "s3://trigramwordprediction2/EMRWordPrediction.jar";
 //        String inputPath = "s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data";
-        String inputPath = "s3://trigramwordprediction/ourinput.txt";
-        String outputPath = "s3://trigramwordprediction";
+        String inputPath = "s3://trigramwordprediction2/ourinput.txt";
+        String outputPath = "s3://trigramwordprediction2";
         HadoopJarStepConfig hadoopJarStep = new HadoopJarStepConfig()
                 .withJar(jarUrl) // This should be a full map reduce application.
                 .withMainClass("Main")
@@ -51,7 +51,7 @@ public class TrigramWordPrediction {
                 .withReleaseLabel("emr-6.4.0") // specifies the EMR release version label, we recommend the latest release
                 .withSteps(emrWordPrediction)
                 .withApplications(hive,spark,ganglia,zeppelin)
-                .withLogUri("s3://trigramwordpredictionlogs") // a URI in S3 for log files is required when debugging is enabled
+                .withLogUri("s3://trigramwordpredictionlogs2") // a URI in S3 for log files is required when debugging is enabled
                 .withServiceRole("EMR_DefaultRole") // replace the default with a custom IAM service role if one is used
                 .withJobFlowRole("EMR_EC2_DefaultRole") // replace the default with a custom EMR role for the EC2 instance profile if one is used
                 .withInstances(new JobFlowInstancesConfig()

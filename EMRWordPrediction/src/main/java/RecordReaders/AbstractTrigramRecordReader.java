@@ -3,6 +3,7 @@ package RecordReaders;
 import ProbabilityParameters.ProbabilityParameters;
 import Trigrams.AbstractTrigram;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -40,12 +41,12 @@ public abstract class AbstractTrigramRecordReader extends RecordReader<AbstractT
 
     protected ProbabilityParameters parseProbabilityParameters(String str) {
         String[] probabilityParameters = str.split(",");
-        IntWritable N1 = new IntWritable(Integer.parseInt(probabilityParameters[0]));
-        IntWritable N2 = new IntWritable(Integer.parseInt(probabilityParameters[1]));
-        IntWritable N3 = new IntWritable(Integer.parseInt(probabilityParameters[2]));
-        IntWritable C0 = new IntWritable(Integer.parseInt(probabilityParameters[3]));
-        IntWritable C1 = new IntWritable(Integer.parseInt(probabilityParameters[4]));
-        IntWritable C2 = new IntWritable(Integer.parseInt(probabilityParameters[5]));
+        LongWritable N1 = new LongWritable(Long.parseLong(probabilityParameters[0]));
+        LongWritable N2 = new LongWritable(Long.parseLong(probabilityParameters[1]));
+        LongWritable N3 = new LongWritable(Long.parseLong(probabilityParameters[2]));
+        LongWritable C0 = new LongWritable(Long.parseLong(probabilityParameters[3]));
+        LongWritable C1 = new LongWritable(Long.parseLong(probabilityParameters[4]));
+        LongWritable C2 = new LongWritable(Long.parseLong(probabilityParameters[5]));
         return new ProbabilityParameters(N1, N2, N3, C0, C1, C2);
     }
 
