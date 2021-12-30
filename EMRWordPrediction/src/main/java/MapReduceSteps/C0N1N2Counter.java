@@ -29,7 +29,7 @@ public class C0N1N2Counter {
             probabilityParameters.setN2(one);
             probabilityParameters.setN1(one);
             //count the number of words in the corpus
-            context.getCounter(C0N1N2Counter.c0Counter.TOTAL_WORDS).increment(3);
+            context.getCounter(C0N1N2Counter.c0Counter.TOTAL_WORDS).increment(probabilityParameters.getN3().get() * 3);
             // count the <w1,w2,w3> and <w2,w3> <w3> appearances
             context.write(trigramN1N2, probabilityParameters);
             context.write(w2w3, probabilityParameters);
@@ -106,7 +106,7 @@ public class C0N1N2Counter {
         @Override
         public int getPartition(TrigramC0N1N2 trigram, ProbabilityParameters count, int numPartitions) {
             // we want all trigrams that start with the same w2,w3 go to the same reducer
-            return trigram.getW3().hashCode() % numPartitions;
+            return (trigram.getW3().hashCode() & Integer.MAX_VALUE) % numPartitions;
         }
     }
 

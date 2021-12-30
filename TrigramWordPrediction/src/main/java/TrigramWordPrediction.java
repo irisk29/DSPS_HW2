@@ -27,8 +27,8 @@ public class TrigramWordPrediction {
 
         // creating map reduces steps for calculating the probabilities
         String jarUrl = "s3://trigramwordprediction2/EMRWordPrediction.jar";
-//        String inputPath = "s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data";
-        String inputPath = "s3://trigramwordprediction2/ourinput.txt";
+        String inputPath = "s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data";
+        //String inputPath = "s3://trigramwordprediction2/ourinput.txt";
         String outputPath = "s3://trigramwordprediction2";
         HadoopJarStepConfig hadoopJarStep = new HadoopJarStepConfig()
                 .withJar(jarUrl) // This should be a full map reduce application.

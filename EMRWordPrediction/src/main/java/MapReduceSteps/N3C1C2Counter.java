@@ -8,6 +8,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
@@ -20,16 +21,21 @@ public class N3C1C2Counter {
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
-            StringTokenizer itrTokenizedValue = new StringTokenizer(value.toString(), "\t");
+            //StringTokenizer itrTokenizedValue = new StringTokenizer(value.toString(), "\\s+");
             // gets the three hebrew words
-            String[] TrigramN3C2Words = itrTokenizedValue.nextToken().split(" ");
-            TrigramN3C1C2 trigram = new TrigramN3C1C2(TrigramN3C2Words[0], TrigramN3C2Words[1], TrigramN3C2Words[2]);
+            String[] info = value.toString().split("\\s+");
+            String w1Str = info[0];
+            String w2Str = info[1];
+            String w3Str = info[2];
+            long amountOfTrigram = Long.parseLong(info[3]);
+            LongWritable trigramAmount = new LongWritable(amountOfTrigram);
+            TrigramN3C1C2 trigram = new TrigramN3C1C2(w1Str, w2Str, w3Str);
             System.out.println("got new Trigrams.TrigramN3C2 in mapper: " + trigram);
             // create the <w1,w2,*> key
             TrigramN3C1C2 w1w2 = new TrigramN3C1C2(trigram.getW1(), trigram.getW2(), "*");
             TrigramN3C1C2 w2 = new TrigramN3C1C2("*", trigram.getW2(), "*");
             // count the <w1,w2,w3> and <w1,w2> appearances
-            context.write(trigram, one);
+            context.write(trigram, trigramAmount);
             context.write(w1w2, one);
             context.write(w2, one);
         }
@@ -88,7 +94,7 @@ public class N3C1C2Counter {
     public static class PartitionerClass extends Partitioner<TrigramN3C1C2, LongWritable> {
         @Override
         public int getPartition(TrigramN3C1C2 trigram, LongWritable count, int numPartitions) {
-            return trigram.getW2().hashCode() % numPartitions;
+            return (trigram.getW2().hashCode() & Integer.MAX_VALUE) % numPartitions;
         }
     }
 
@@ -110,6 +116,8 @@ public class N3C1C2Counter {
 
         FileInputFormat.addInputPath(job, new Path(inputPath));
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
+
+        job.setInputFormatClass(SequenceFileInputFormat.class);
 
         System.out.println("Finished configure N3C1C2 job, start executing!");
         job.waitForCompletion(true);
