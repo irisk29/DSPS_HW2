@@ -99,6 +99,15 @@ public class ProbabilityParameters implements Writable {
         out.writeLong(this.C2.get());
     }
 
+    public double calcProb()
+    {
+        double k3 = (Math.log(N3.get() + 1) + 1) / (Math.log(N3.get() + 1) + 2);
+        double k2 = (Math.log(N2.get() + 1) + 1) / (Math.log(N2.get() + 1) + 2);
+        return k3 * (((double)N3.get())/ C2.get()) +
+                (1 - k3) * k2 * (((double)N2.get()) / C1.get()) +
+                (1 - k3) * (1 - k2) * (((double)N1.get()) / C0.get());
+    }
+
     @Override
     public String toString() {
         return this.N1.toString() + "," + this.N2.toString() + "," + this.N3.toString()

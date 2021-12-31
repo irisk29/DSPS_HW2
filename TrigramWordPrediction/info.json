@@ -1,0 +1,9 @@
+{
+  "with-combiner" : "false",
+  "output-path" : "s3://trigrampredictionwithoutcombiner",
+  "log-path" : "s3://trigramwordpredictionlogs",
+  "jar-path" : "s3://trigramwordprediction/EMRWordPrediction.jar",
+  "main-class" : "Main",
+  "num-of-instances" : 7,
+  "key-name" : "dsps"
+}

@@ -14,18 +14,18 @@ public class TrigramC0N1N2 extends AbstractTrigram {
         int compareRes = this.w3.compareTo(other.getW3());
         if (compareRes != 0)
             return compareRes;
-        if (this.w2.equals("*") && !other.getW2().equals("*"))
+        if (this.w2.equals("~") && !other.getW2().equals("~"))
             return -1;
-        if (other.getW2().equals("*") && !this.w2.equals("*"))
+        if (other.getW2().equals("~") && !this.w2.equals("~"))
             return 1;
         compareRes = this.w2.compareTo(other.getW2());
         if (compareRes != 0)
             return compareRes;
-        if (this.w1.equals("*") && !other.getW1().equals("*"))
+        if (this.w1.equals("~") && !other.getW1().equals("~"))
             return -1;
-        if (other.getW1().equals("*") && !this.w1.equals("*"))
+        if (other.getW1().equals("~") && !this.w1.equals("~"))
             return 1;
-        // if not *, return the compareTo value by the last word
+        // if not ~, return the compareTo value by the last word
         return this.w1.compareTo(other.getW1());
     }
 }
