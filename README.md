@@ -1,64 +1,50 @@
 # DSPS_HW2
 In this assignment we will generate a knowledge-base for Hebrew word-prediction system, based on Google 3-Gram Hebrew dataset, using Amazon Elastic Map-Reduce (EMR).
 The produced knowledge-base indicates for each pair of words the probability of their possible next words.
+
 ## How to run our project
 1. Copy and paste your credentials into ~/.aws/credentials.
-2. Create a bucket in s3.
-3. Create `Manager.jar` and `Worker.jar` and upload them inside the bucket.
-4. Create a file `LocalApplication/secure_info.json` -
+2. Create buckets in s3 for the output & log files.
+3. Create `EMRWordPrediction.jar` and upload it to s3.
+4. Create a file `TrigramWordPrediction/info.json` -
   The content of the file should be
     ```
     {
-      "ami" : "<image to run for manager and workers>",
-      "arn" : "<roles for the ec2 instances - must contain full access to S3, SQS and EC2>",
-      "keyName" : "<name of the keyPair>",
-      "securityGroupId" : "<security group id>",
-      "jarsBucketName" : "<name of the bucket you created - must be an unique name in us-east-1 region>"
+      "with-combiner" : "<true to run with combiner, anything else to run without combiner>",
+      "output-path" : "<s3 output bucket path you created earlier>",
+      "log-path" : "<s3 log bucket path you created earlier>",
+      "jar-path" : "<jar file location path in s3>",
+      "main-class" : "<main class of the jar file>",
+      "num-of-instances" : "<number of instances to use. Can be MAX 19>",
+      "key-name" : "<name of the keyPair>"
     }
    ```
-5. run local app with 4 args:
-   1. `args[0]`: input file name path
-   2. `args[1]`: output file name
-   3. `args[2]`: workers’ files ratio 
-   4. `args[3]`: (optional) if not empty, terminate the application at the end
-## Application Flow
-1. Local Application uploads the file with the list of PDF files and operations to S3.
-2. All Local Applications sends a message in the same queue named "lamqueue" stating the location of their input file on S3 and the queue name where they expect to get the finished message (unique queue per Local Application - "malqueue" + localID).
-3. Manager waits for messages in the "lamqueue".
-4. Once he gets one, for each URL in the input list he sends message in the "tasksqueue".
-5. Manager bootstraps workers nodes to process messages.
-6. Worker waits for messages in the "tasksqueue".
-7. Once he gets one, he downloads the PDF file indicated in the message.
-8. Worker performs the requested operation on the PDF file, and uploads the resulting output to S3.
-9. Worker puts a message in the "finishedtasksqueue" indicating the S3 URL of the output file.
-10. Manager waits for finished messages in the "finishedtasksqueue".
-11. For each finished message he gets, he adds it to the Local Application's summary file.
-12. Manager uploads the summary file to S3.
-13. For each Local Application's summary file, Manager sends an SQS message in the "malqueue" + localID.
-14. Local Application reads final message from the "malqueue" + localID.
-15. Local Application downloads the summary file from S3.
-16. Local Application creates html output file.
+5. run TrigramWordPrediction jar using the command `java -jar TrigramWordPrediction.jar`.
 
-![dspshw1flow drawio](https://user-images.githubusercontent.com/48298162/144744422-c58abe04-9201-4869-bd95-36cbdbaede14.png)
-
-## Termination Flow
-1. Local application sends a terminate message to the manager if it received terminate as one of its arguments.
-2. If Manager gets termination message, he deletes "lamqueue" for not getting more tasks from local applications.
-3. Stops all threads that sends new messages to "tasksqueue".
-4. Waits until all tasks in the "tasksqueue" were handeled, and then delete this queue.
-5. The Workers see that the "tasksqueue" not exists anymore and they stop themself.
-6. Manager terminates all stopped workers.
-7. Manager waits until all finished tasks in the "finishedtasksqueue" were handeled, and then delete this queue.
-8. The Manager gets terminate.
-
-## Technical stuff
-- We used Linux-Kernel 5.10 AMI, and instance type of T2-micro for the workers and T2-Medium for the manager.
-- When we run the input-sample-1.txt which contains 2500 links with n=250 it took about 10 minutes for the all process to run.
-- When we run the input-sample-2.txt which contains 100 links with n=10 it took about 2 minutes for the all process to run.
+## Map-Reduce Steps
+1. Step One, Counting N3, C1 and C2:
+In this step we are counting the number of times (w1, w2, w3) occurs, the number of times w2 occurs and the number of times (w1, w2) occurs.
+For each (w1, w2, w3) in the 3-gram dataset, we emit in the mapper <(w1, w2, w3), (trigram amount - received from the dataset)>, <(w1, w2, ~), 1> and <(~, w2, ~), 1>.
+Hadoop's environment sort the key-values by our compare-to function. The compare-to function first sort it by w2, then by w1 and finally by w3. We have defined that ~ is smaller then everything. In that way, the reducers will get the key-values pairs in the following order: (~, w2, ~), then (w1, w2, ~) and lastly (w1, w2, w3).
+For example, if we had the following two trigrams - (קפה, נמס, עלית), (ילד, טוב, מאוד), the way our key-values pairs will get to the reducer is
+```
+    (~, טוב, ~)
+    (~ ,ילד, טוב)
+    (ילד, טוב, מאוד)
+    (~, נמס, ~)
+    (~ ,קפה, נמס)
+    (קפה, נמס, עלית)
+```
+In the reducers, we store local variables, which save us the C1 and C2 for a specific w2 and (w1, w2) respectively. Everytime we get (w1 ,w2, w3) in the reducer we emit <(w1 ,w2, w3), (received N3, saved C1, saved C2)>, and everytime we get (w1 ,w2, ~) or (~ ,w2, ~) we will update C1 or C2.
+We ensure that each reducer will get all the relevant key-value pairs for a specific trigram. We do so in the Partitioner, as we defined there that every trigram with the same second word hash-code will send to the same reducer.
+2. Step Two, Counting C0, N1 and N2:
+In this step we are counting the total number of word instances in the corpus, the number of times w3 occurs and the number of times (w2, w3) occurs.
+For each (w1, w2, w3) and (N3, C1, C2) from previous step, we add N3 * 3 to global counter that sum the total number of word instances in the corpus (C0). In addition, we emit in the mapper <(~, w2, w3), 1>, <(~, ~, w3), 1> and <(w1, w2, w3), (previous N3, C1 and C2)>.
+Hadoop's environment sort the key-values by our new compare-to function. This compare-to function first sort it by w3, then by w2 and finally by w1. We have defined that ~ is smaller then everything. In that way, the reducers will get the key-values pairs in the following order: (~, ~, w3), then (~, w2, w3) and lastly (w1, w2, w3).
+In the reducers, we store local variables, which save us the N1 and N2 for a specific w3 and (w2, w3) respectively. Everytime we get (w1 ,w2, w3) in the reducer we emit <(w1 ,w2, w3), (previous N3, previous C1, previous C2, global C0, saved N1, saved N2)>, and everytime we get (~, w2, w3) or (~, ~, w3) we will update N1 or N2.
+As in the previous step, we ensure that each reducer will get all the relevant key-value pairs for a specific trigram. We do so in the Partitioner, as we defined there that every trigram with the same third word hash-code will send to the same reducer.
 
 ## Considerations
-### Security
-The aws credentials are not presented in plain text. We created a credentials file inside the ~/.aws folder from which we derive the credentials that are needed to perform the necessary actions. Other private data that we didn't want to be expose to anyone (ami, arn, securityGroupId, ect.), we read from json file which exists only on our local device.
 ### Scalability
 We considered the scalability matter by the following aspects:
 1. Thread pool - we did not use a TPS (Thread Per Client) methodology because we cannot assign TPS when we have a large amount of client, for example 1 billion clients. Using the thread pool we assigned the maximum number of threads we can in order to process the local application requests simultaneously.
@@ -79,3 +65,6 @@ When a termination message is received it acivates the termination flow as descr
 ### Limitation
 - Number of EC2 clients: we ensure that we never creates more than <aws limitation number> EC2 clients.
 - 100$ in the account: we mostly used the free tier resources to keep up with the budget and used the appropriate resources that can support the task we gave and did not choose randomly with financial considerations.
+
+## Technical stuff
+- We used instance type of M5Xlarge for all instances.
