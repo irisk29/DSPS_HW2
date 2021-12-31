@@ -1,6 +1,6 @@
 {
   "with-combiner" : "true",
-  "output-path" : "s3://trigramwordprediction2",
+  "output-path" : "s3://trigramwordpredictionwithcombiner",
   "log-path" : "s3://trigramwordpredictionlogs2",
   "jar-path" : "s3://trigramwordprediction2/EMRWordPrediction.jar",
   "main-class" : "Main",

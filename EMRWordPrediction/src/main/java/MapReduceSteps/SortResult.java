@@ -7,8 +7,8 @@ import Trigrams.TrigramResult;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
@@ -19,20 +19,31 @@ public class SortResult {
 
         @Override
         public void map(TrigramC0N1N2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
-            TrigramResult resTri = new TrigramResult(trigram.getW1(), trigram.getW2(), trigram.getW3());
-            long n1 = probabilityParameters.getN1().get();
-            long n2 = probabilityParameters.getN2().get();
-            long n3 = probabilityParameters.getN3().get();
-            long c0 = probabilityParameters.getC0().get();
-            long c1 = probabilityParameters.getC1().get();
-            long c2 = probabilityParameters.getC2().get();
+            double prob = probabilityParameters.calcProb();
+            TrigramResult resTri = new TrigramResult(trigram.getW1(), trigram.getW2(), trigram.getW3(), prob);
+            context.write(resTri, new DoubleWritable(Math.min(prob,1.0)));
+        }
+    }
 
-            double k3 = (Math.log(n3 + 1) + 1) / (Math.log(n3 + 1) + 2);
-            double k2 = (Math.log(n2 + 1) + 1) / (Math.log(n2 + 1) + 2);
+    public static class ReducerClass extends Reducer<TrigramResult, DoubleWritable, TrigramResult, DoubleWritable> {
 
-            double prob = k3 * (((double)n3)/ c2) + (1 - k3) * k2 * (((double)n2) / c1) + (1 - k3) * (1 - k2) * (((double)n1) / c0);
-            resTri.setProb(prob);
-            context.write(resTri, new DoubleWritable(prob));
+        @Override
+        public void reduce(TrigramResult trigram, Iterable<DoubleWritable> counts, Context context) throws IOException, InterruptedException {
+            double min = Double.MAX_VALUE;
+            for(DoubleWritable c : counts)
+            {
+                if(c.get() < min) min = c.get();
+            }
+            trigram.setProb(min);
+            context.write(trigram, new DoubleWritable(min));
+        }
+    }
+
+    public static class PartitionerClass extends Partitioner<TrigramResult, DoubleWritable> {
+        @Override
+        public int getPartition(TrigramResult trigram, DoubleWritable count, int numPartitions) {
+            // we want all trigrams that start with the same w2,w3 go to the same reducer
+            return ((trigram.getW1().hashCode() + trigram.getW2().hashCode()) & Integer.MAX_VALUE) % numPartitions;
         }
     }
 
@@ -40,13 +51,16 @@ public class SortResult {
         Configuration conf = new Configuration();
 
         Job job = Job.getInstance(conf, "Sort Job");
-        job.setJarByClass(C0N1N2Counter.class);
+        job.setJarByClass(SortResult.class);
 
         job.setMapperClass(SortResult.MapperClass.class);
-        job.setNumReduceTasks(0);
+        job.setPartitionerClass(SortResult.PartitionerClass.class);
+        job.setReducerClass(SortResult.ReducerClass.class);
 
         job.setMapOutputKeyClass(TrigramResult.class);
         job.setMapOutputValueClass(DoubleWritable.class);
+        job.setOutputKeyClass(TrigramResult.class);
+        job.setOutputValueClass(DoubleWritable.class);
 
         FileInputFormat.addInputPath(job, new Path(inputPath));
         FileOutputFormat.setOutputPath(job, new Path(outputPath));

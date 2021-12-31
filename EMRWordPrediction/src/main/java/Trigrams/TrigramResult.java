@@ -3,11 +3,13 @@ package Trigrams;
 public class TrigramResult extends AbstractTrigram{
     private double prob;
 
-    public TrigramResult(String w1, String w2, String w3) {
+    public TrigramResult(String w1, String w2, String w3, double prob) {
         super(w1, w2, w3);
+        this.prob = prob;
     }
     public TrigramResult() {
         super();
+        prob = 0.0;
     }
 
     public double getProb() {
@@ -20,9 +22,6 @@ public class TrigramResult extends AbstractTrigram{
 
     @Override
     public int compareTo(AbstractTrigram other) {
-        // in this compareTo the options we get are:
-        // <w1,*,*>, <*,w2,*> <*,*,w3> <w1,w2,w3>
-        //we want that all the <w1,w2,w3> trigrams will be last and the singletons first but their order doesn't really matter
         TrigramResult otherRes = (TrigramResult) other;
         int compareRes = this.w1.compareTo(other.getW1());
         if (compareRes != 0)

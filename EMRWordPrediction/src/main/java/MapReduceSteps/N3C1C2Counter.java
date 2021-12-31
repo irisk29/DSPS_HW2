@@ -27,7 +27,7 @@ public class N3C1C2Counter {
             String w1Str = info[0];
             String w2Str = info[1];
             String w3Str = info[2];
-            long amountOfTrigram = Long.parseLong(info[3]);
+            long amountOfTrigram = Long.parseLong(info[4]);
             LongWritable trigramAmount = new LongWritable(amountOfTrigram);
             TrigramN3C1C2 trigram = new TrigramN3C1C2(w1Str, w2Str, w3Str);
             System.out.println("got new Trigrams.TrigramN3C2 in mapper: " + trigram);
