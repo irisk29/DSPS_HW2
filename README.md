@@ -23,10 +23,10 @@ The produced knowledge-base indicates for each pair of words the probability of 
 
 ## Map-Reduce Steps
 1. Step One, Counting N3, C1 and C2:
-In this step we are counting the number of times (w1, w2, w3) occurs, the number of times w2 occurs and the number of times (w1, w2) occurs.
-For each (w1, w2, w3) in the 3-gram dataset, we emit in the mapper <(w1, w2, w3), (trigram amount - received from the dataset)>, <(w1, w2, ~), 1> and <(~, w2, ~), 1>.
-Hadoop's environment sort the key-values by our compare-to function. The compare-to function first sort it by w2, then by w1 and finally by w3. We have defined that ~ is smaller then everything. In that way, the reducers will get the key-values pairs in the following order: (~, w2, ~), then (w1, w2, ~) and lastly (w1, w2, w3).
-For example, if we had the following two trigrams - (קפה, נמס, עלית), (ילד, טוב, מאוד), the way our key-values pairs will get to the reducer is
+In this step we are counting the number of times `(w1, w2, w3)` occurs, the number of times `w2` occurs and the number of times `(w1, w2)` occurs.
+For each `(w1, w2, w3)` in the 3-gram dataset, we emit in the mapper <`(w1, w2, w3)`, (trigram amount - received from the dataset)>, <`(w1, w2, ~)`, 1> and <`(~, w2, ~)`, 1>.
+Hadoop's environment sort the key-values by our compare-to function. The compare-to function first sort it by w2, then by w1 and finally by w3. We have defined that ~ is smaller then everything. In that way, the reducers will get the key-values pairs in the following order: `(~, w2, ~)`, then `(w1, w2, ~)` and lastly `(w1, w2, w3)`.
+For example, if we had the following two trigrams - `(קפה, נמס, עלית)`, `(ילד, טוב, מאוד)`, the way our key-values pairs will get to the reducer is
 ```
     (~, טוב, ~)
     (~ ,ילד, טוב)
@@ -35,7 +35,7 @@ For example, if we had the following two trigrams - (קפה, נמס, עלית), 
     (~ ,קפה, נמס)
     (קפה, נמס, עלית)
 ```
-In the reducers, we store local variables, which save us the C1 and C2 for a specific w2 and (w1, w2) respectively. Everytime we get (w1 ,w2, w3) in the reducer we emit <(w1 ,w2, w3), (received N3, saved C1, saved C2)>, and everytime we get (w1 ,w2, ~) or (~ ,w2, ~) we will update C1 or C2.
+In the reducers, we store local variables, which save us the C1 and C2 for a specific `w2` and `(w1, w2)` respectively. Everytime we get `(w1 ,w2, w3)` in the reducer we emit <`(w1 ,w2, w3)`, (received N3, saved C1, saved C2)>, and everytime we get `(w1 ,w2, ~)` or `(~ ,w2, ~)` we will update C1 or C2.
 We ensure that each reducer will get all the relevant key-value pairs for a specific trigram. We do so in the Partitioner, as we defined there that every trigram with the same second word hash-code will send to the same reducer.
 2. Step Two, Counting C0, N1 and N2:
 In this step we are counting the total number of word instances in the corpus, the number of times w3 occurs and the number of times (w2, w3) occurs.
