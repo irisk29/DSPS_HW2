@@ -31,7 +31,10 @@ public class TrigramResult extends AbstractTrigram{
         compareRes = this.w2.compareTo(other.getW2());
         if (compareRes != 0)
             return compareRes;
-        return Double.compare(this.prob, otherRes.prob);
+        compareRes = Double.compare(this.prob, otherRes.prob);
+        if(compareRes != 0)
+            return compareRes;
+        return this.w3.compareTo(other.getW3());
     }
 
 }

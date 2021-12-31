@@ -17,11 +17,9 @@ import java.util.StringTokenizer;
 public class N3C1C2Counter {
 
     public static class MapperClass extends Mapper<LongWritable, Text, TrigramN3C1C2, LongWritable> {
-        private final static LongWritable one = new LongWritable(1);
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
-            //StringTokenizer itrTokenizedValue = new StringTokenizer(value.toString(), "\\s+");
             // gets the three hebrew words
             String[] info = value.toString().split("\\s+");
             String w1Str = info[0];
@@ -36,8 +34,8 @@ public class N3C1C2Counter {
             TrigramN3C1C2 w2 = new TrigramN3C1C2("~", trigram.getW2(), "~");
             // count the <w1,w2,w3> and <w1,w2> appearances
             context.write(trigram, trigramAmount);
-            context.write(w1w2, one);
-            context.write(w2, one);
+            context.write(w1w2, trigramAmount);
+            context.write(w2, trigramAmount);
         }
     }
 

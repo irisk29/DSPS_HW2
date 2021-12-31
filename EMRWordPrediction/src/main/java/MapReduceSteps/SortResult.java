@@ -21,7 +21,7 @@ public class SortResult {
         public void map(TrigramC0N1N2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
             double prob = probabilityParameters.calcProb();
             TrigramResult resTri = new TrigramResult(trigram.getW1(), trigram.getW2(), trigram.getW3(), prob);
-            context.write(resTri, new DoubleWritable(Math.min(prob,1.0)));
+            context.write(resTri, new DoubleWritable(prob));
         }
     }
 
@@ -29,13 +29,7 @@ public class SortResult {
 
         @Override
         public void reduce(TrigramResult trigram, Iterable<DoubleWritable> counts, Context context) throws IOException, InterruptedException {
-            double min = Double.MAX_VALUE;
-            for(DoubleWritable c : counts)
-            {
-                if(c.get() < min) min = c.get();
-            }
-            trigram.setProb(min);
-            context.write(trigram, new DoubleWritable(min));
+            context.write(trigram, counts.iterator().next());
         }
     }
 

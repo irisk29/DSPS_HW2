@@ -16,7 +16,6 @@ import java.io.IOException;
 public class C0N1N2Counter {
     static enum c0Counter { TOTAL_WORDS }
     public static class MapperClass extends Mapper<TrigramN3C1C2, ProbabilityParameters, TrigramC0N1N2, ProbabilityParameters> {
-        private final static LongWritable one = new LongWritable(1);
 
         @Override
         public void map(TrigramN3C1C2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
@@ -26,8 +25,8 @@ public class C0N1N2Counter {
             TrigramC0N1N2 w2w3 = new TrigramC0N1N2("~", trigram.getW2(), trigram.getW3());
             TrigramC0N1N2 w3 = new TrigramC0N1N2("~", "~", trigram.getW3());
             // save in counter the appearance of this words
-            probabilityParameters.setN2(one);
-            probabilityParameters.setN1(one);
+            probabilityParameters.setN2(probabilityParameters.getN3());
+            probabilityParameters.setN1(probabilityParameters.getN3());
             //count the number of words in the corpus
             context.getCounter(C0N1N2Counter.c0Counter.TOTAL_WORDS).increment(probabilityParameters.getN3().get() * 3);
             // count the <w1,w2,w3> and <w2,w3> <w3> appearances
