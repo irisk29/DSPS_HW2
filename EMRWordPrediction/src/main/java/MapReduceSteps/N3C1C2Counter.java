@@ -31,9 +31,9 @@ public class N3C1C2Counter {
             LongWritable trigramAmount = new LongWritable(amountOfTrigram);
             TrigramN3C1C2 trigram = new TrigramN3C1C2(w1Str, w2Str, w3Str);
             System.out.println("got new Trigrams.TrigramN3C2 in mapper: " + trigram);
-            // create the <w1,w2,*> key
-            TrigramN3C1C2 w1w2 = new TrigramN3C1C2(trigram.getW1(), trigram.getW2(), "*");
-            TrigramN3C1C2 w2 = new TrigramN3C1C2("*", trigram.getW2(), "*");
+            // create the <w1,w2,~> key
+            TrigramN3C1C2 w1w2 = new TrigramN3C1C2(trigram.getW1(), trigram.getW2(), "~");
+            TrigramN3C1C2 w2 = new TrigramN3C1C2("~", trigram.getW2(), "~");
             // count the <w1,w2,w3> and <w1,w2> appearances
             context.write(trigram, trigramAmount);
             context.write(w1w2, one);
@@ -68,15 +68,15 @@ public class N3C1C2Counter {
             for (LongWritable count : counts) {
                 countSum += count.get();
             }
-            // check if this is <w1,w2,*> or <w1,w2,w3>
-            // if <w1,w2,*>, we will update C2 for the next <w1,w2,w3>
-            // if <*,w2,*>, we will update C1 for the next <w1,w2,w3>
+            // check if this is <w1,w2,~> or <w1,w2,w3>
+            // if <w1,w2,~>, we will update C2 for the next <w1,w2,w3>
+            // if <~,w2,~>, we will update C1 for the next <w1,w2,w3>
             // else, we emit the saved C2,C1 and the counterSum (N3)
-            if (trigram.getW3().equals("*") && !trigram.getW1().equals("*")) {
-                System.out.println("reducer got new Trigrams.TrigramN3C2 <w1,w2,*>: " + trigram);
+            if (trigram.getW3().equals("~") && !trigram.getW1().equals("~")) {
+                System.out.println("reducer got new Trigrams.TrigramN3C2 <w1,w2,~>: " + trigram);
                 this.C2.set(countSum);
             }
-            else if(trigram.getW3().equals("*") && trigram.getW1().equals("*")) //<*,w2,*>
+            else if(trigram.getW3().equals("~") && trigram.getW1().equals("~")) //<~,w2,~>
             {
                 this.C1.set(countSum);
             }
@@ -98,7 +98,7 @@ public class N3C1C2Counter {
         }
     }
 
-    public static void runMain(String inputPath, String outputPath) throws Exception {
+    public static void runMain(String inputPath, String outputPath, String withCombiner) throws Exception {
         Configuration conf = new Configuration();
 
         Job job = Job.getInstance(conf, "N3C1C2 Counter");
@@ -106,7 +106,8 @@ public class N3C1C2Counter {
 
         job.setMapperClass(MapperClass.class);
         job.setPartitionerClass(PartitionerClass.class);
-        job.setCombinerClass(CombinerClass.class);
+        if(withCombiner.equals("true"))
+            job.setCombinerClass(CombinerClass.class);
         job.setReducerClass(ReducerClass.class);
 
         job.setMapOutputKeyClass(TrigramN3C1C2.class);

@@ -22,9 +22,9 @@ public class C0N1N2Counter {
         public void map(TrigramN3C1C2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
             TrigramC0N1N2 trigramN1N2 = new TrigramC0N1N2(trigram.getW1(), trigram.getW2(), trigram.getW3());
             System.out.println("got new trigram in mapper: " + trigramN1N2);
-            // create the <*,w2,w3> key
-            TrigramC0N1N2 w2w3 = new TrigramC0N1N2("*", trigram.getW2(), trigram.getW3());
-            TrigramC0N1N2 w3 = new TrigramC0N1N2("*", "*", trigram.getW3());
+            // create the <~,w2,w3> key
+            TrigramC0N1N2 w2w3 = new TrigramC0N1N2("~", trigram.getW2(), trigram.getW3());
+            TrigramC0N1N2 w3 = new TrigramC0N1N2("~", "~", trigram.getW3());
             // save in counter the appearance of this words
             probabilityParameters.setN2(one);
             probabilityParameters.setN1(one);
@@ -80,14 +80,14 @@ public class C0N1N2Counter {
                 n2CountSum += probabilityParameters.getN2().get();
                 n1CountSum += probabilityParameters.getN1().get();
             }
-            // check if this is <*,w2,w3> or <w1,w2,w3> <*,*,w3>
-            // if <*,w2,w3>, we will update N2 for the next <w1,w2,w3>
-            // if <*,*,w3> we will update N1 for next <w1,w2,w3>
+            // check if this is <~,w2,w3> or <w1,w2,w3> <~,~,w3>
+            // if <~,w2,w3>, we will update N2 for the next <w1,w2,w3>
+            // if <~,~,w3> we will update N1 for next <w1,w2,w3>
             // else, we emit the saved N2 and the updatedProbabilityParameters
-            if (trigram.getW1().equals("*") && !trigram.getW2().equals("*")) { // <*,w2,w3>
+            if (trigram.getW1().equals("~") && !trigram.getW2().equals("~")) { // <~,w2,w3>
                 this.N2.set(n2CountSum);
             }
-            else if(trigram.getW1().equals("*") && trigram.getW2().equals("*")) // <*,*,w3>
+            else if(trigram.getW1().equals("~") && trigram.getW2().equals("~")) // <~,~,w3>
             {
                 this.N1.set(n1CountSum);
             }
@@ -110,7 +110,7 @@ public class C0N1N2Counter {
         }
     }
 
-    public static void runMain(String inputPath, String outputPath) throws Exception {
+    public static void runMain(String inputPath, String outputPath, String withCombiner) throws Exception {
         Configuration conf = new Configuration();
 
         Job job = Job.getInstance(conf, "C0N1N2 Counter");
@@ -118,7 +118,8 @@ public class C0N1N2Counter {
 
         job.setMapperClass(C0N1N2Counter.MapperClass.class);
         job.setPartitionerClass(C0N1N2Counter.PartitionerClass.class);
-        job.setCombinerClass(C0N1N2Counter.CombinerClass.class);
+        if(withCombiner.equals("true"))
+            job.setCombinerClass(C0N1N2Counter.CombinerClass.class);
         job.setReducerClass(C0N1N2Counter.ReducerClass.class);
 
         job.setMapOutputKeyClass(TrigramC0N1N2.class);
