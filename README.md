@@ -44,12 +44,12 @@ The produced knowledge-base indicates for each pair of words the probability of 
   In the reducers, we store local variables, which save us the N1 and N2 for a specific `w3` and `(w2, w3)` respectively. Everytime we get `(w1 ,w2, w3)` in the reducer we emit <`(w1 ,w2, w3`, (previous N3, previous C1, previous C2, global C0, saved N1, saved N2)>, and everytime we get `(~, w2, w3)` or `(~, ~, w3)` we will update N1 or N2.
   As in the previous step, we ensure that each reducer will get all the relevant key-value pairs for a specific trigram. We do so in the Partitioner, as we defined there that every trigram with the same third word hash-code will send to the same reducer.
 - ### Step Three, Calculating Formula and Sorting Results:
-  For the last step we used only mapper side, which calculating the probability function for each trigram and sort the results by `(w1,w2)` and the trigram probability.
+  For the last step we used the last map-reduce round, which calculates the probability function for each trigram and sort the results by `(w1,w2)` and the trigram probability.
 
 ## Scalability
 We considered the scalability matter by the following aspects:
 - no-memory requirement - Instead of saving certain data for trigrams in the memory, we split the calculations in a smart way that allows us to sort the key-value pairs. The records will always arrive in order that require only O(1) memory usage. No matter what size corpus will be, our program can handle it because it does not has any memory size assumptions.
-- Increasing the number of workers (if needed) - in order to speed up the proccess, we could increase the number of insatnces by our need.
+- Increasing the number of workers (if needed) - in order to speed up the proccess, we could increase the number of instances by our need.
 
 ## Technical stuff
 - We used instance type of M5Xlarge for all instances.
