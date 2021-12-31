@@ -17,7 +17,6 @@ import java.util.StringTokenizer;
 public class N3C1C2Counter {
 
     public static class MapperClass extends Mapper<LongWritable, Text, TrigramN3C1C2, LongWritable> {
-
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
             // gets the three hebrew words
@@ -25,14 +24,16 @@ public class N3C1C2Counter {
             String w1Str = info[0];
             String w2Str = info[1];
             String w3Str = info[2];
+            // gets the number of times this n-gram appeared in this year
             long amountOfTrigram = Long.parseLong(info[4]);
             LongWritable trigramAmount = new LongWritable(amountOfTrigram);
+            // create the <w1,w2,w3> key
             TrigramN3C1C2 trigram = new TrigramN3C1C2(w1Str, w2Str, w3Str);
-            System.out.println("got new Trigrams.TrigramN3C2 in mapper: " + trigram);
             // create the <w1,w2,~> key
             TrigramN3C1C2 w1w2 = new TrigramN3C1C2(trigram.getW1(), trigram.getW2(), "~");
+            // create the <~,w2,~> key
             TrigramN3C1C2 w2 = new TrigramN3C1C2("~", trigram.getW2(), "~");
-            // count the <w1,w2,w3> and <w1,w2> appearances
+            // count the <w1,w2,w3>, <w1,w2> and <w2> appearances
             context.write(trigram, trigramAmount);
             context.write(w1w2, trigramAmount);
             context.write(w2, trigramAmount);
@@ -48,7 +49,6 @@ public class N3C1C2Counter {
                 countSum += count.get();
             }
             context.write(trigram, new LongWritable(countSum));
-            System.out.println("finish combining local Trigrams.TrigramN3C2: " + trigram.toString());
         }
     }
 
@@ -57,29 +57,23 @@ public class N3C1C2Counter {
         private LongWritable C1 = new LongWritable(0);
 
         @Override
-        public void setup(Context context) {}
-
-        @Override
         public void reduce(TrigramN3C1C2 trigram, Iterable<LongWritable> counts, Context context) throws IOException, InterruptedException {
             // sum all counts we receive for the Trigrams.TrigramN3C2
             long countSum = 0;
             for (LongWritable count : counts) {
                 countSum += count.get();
             }
-            // check if this is <w1,w2,~> or <w1,w2,w3>
+            // check if this is <w1,w2,~>, <~, w2, ~> or <w1,w2,w3>
             // if <w1,w2,~>, we will update C2 for the next <w1,w2,w3>
             // if <~,w2,~>, we will update C1 for the next <w1,w2,w3>
             // else, we emit the saved C2,C1 and the counterSum (N3)
-            if (trigram.getW3().equals("~") && !trigram.getW1().equals("~")) {
-                System.out.println("reducer got new Trigrams.TrigramN3C2 <w1,w2,~>: " + trigram);
+            if (trigram.getW3().equals("~") && !trigram.getW1().equals("~")) {   // <w1,w2,~>
                 this.C2.set(countSum);
             }
-            else if(trigram.getW3().equals("~") && trigram.getW1().equals("~")) //<~,w2,~>
-            {
+            else if(trigram.getW3().equals("~") && trigram.getW1().equals("~")) {   // <~,w2,~>
                 this.C1.set(countSum);
             }
             else {
-                System.out.println("reducer got new Trigrams.TrigramN3C2 <w1,w2,w3>: " + trigram);
                 ProbabilityParameters probabilityParameters = new ProbabilityParameters();
                 probabilityParameters.setC2(this.C2);
                 probabilityParameters.setN3(new LongWritable(countSum));

@@ -6,6 +6,6 @@ public class Main {
 
         N3C1C2Counter.runMain(inputStep1, outputPath + "/outputStep1", withCombiner);
         C0N1N2Counter.runMain(outputPath + "/outputStep1", outputPath + "/outputStep2", withCombiner);
-        SortResult.runMain(outputPath + "/outputStep2", outputPath + "/outputStep3");
+        CalculateProbability.runMain(outputPath + "/outputStep2", outputPath + "/outputStep3");
     }
 }

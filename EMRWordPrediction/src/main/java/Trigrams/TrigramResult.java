@@ -12,14 +12,6 @@ public class TrigramResult extends AbstractTrigram{
         prob = 0.0;
     }
 
-    public double getProb() {
-        return prob;
-    }
-
-    public void setProb(double prob) {
-        this.prob = prob;
-    }
-
     @Override
     public int compareTo(AbstractTrigram other) {
         TrigramResult otherRes = (TrigramResult) other;

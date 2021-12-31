@@ -7,18 +7,17 @@ import Trigrams.TrigramResult;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
 
-public class SortResult {
+public class CalculateProbability {
     public static class MapperClass extends Mapper<TrigramC0N1N2, ProbabilityParameters, TrigramResult, DoubleWritable> {
-
         @Override
         public void map(TrigramC0N1N2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
+            // calc prob for trigram
             double prob = probabilityParameters.calcProb();
             TrigramResult resTri = new TrigramResult(trigram.getW1(), trigram.getW2(), trigram.getW3(), prob);
             context.write(resTri, new DoubleWritable(prob));
@@ -26,7 +25,6 @@ public class SortResult {
     }
 
     public static class ReducerClass extends Reducer<TrigramResult, DoubleWritable, TrigramResult, DoubleWritable> {
-
         @Override
         public void reduce(TrigramResult trigram, Iterable<DoubleWritable> counts, Context context) throws IOException, InterruptedException {
             context.write(trigram, counts.iterator().next());
@@ -44,12 +42,12 @@ public class SortResult {
     public static void runMain(String inputPath, String outputPath) throws Exception {
         Configuration conf = new Configuration();
 
-        Job job = Job.getInstance(conf, "Sort Job");
-        job.setJarByClass(SortResult.class);
+        Job job = Job.getInstance(conf, "Calc Probability & Sort Job");
+        job.setJarByClass(CalculateProbability.class);
 
-        job.setMapperClass(SortResult.MapperClass.class);
-        job.setPartitionerClass(SortResult.PartitionerClass.class);
-        job.setReducerClass(SortResult.ReducerClass.class);
+        job.setMapperClass(CalculateProbability.MapperClass.class);
+        job.setPartitionerClass(CalculateProbability.PartitionerClass.class);
+        job.setReducerClass(CalculateProbability.ReducerClass.class);
 
         job.setMapOutputKeyClass(TrigramResult.class);
         job.setMapOutputValueClass(DoubleWritable.class);

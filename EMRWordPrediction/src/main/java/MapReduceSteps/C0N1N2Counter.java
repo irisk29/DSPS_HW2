@@ -14,22 +14,24 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 
 public class C0N1N2Counter {
-    static enum c0Counter { TOTAL_WORDS }
-    public static class MapperClass extends Mapper<TrigramN3C1C2, ProbabilityParameters, TrigramC0N1N2, ProbabilityParameters> {
 
+    enum c0Counter { TOTAL_WORDS }
+
+    public static class MapperClass extends Mapper<TrigramN3C1C2, ProbabilityParameters, TrigramC0N1N2, ProbabilityParameters> {
         @Override
         public void map(TrigramN3C1C2 trigram, ProbabilityParameters probabilityParameters, Context context) throws IOException,  InterruptedException {
+            // create the <w1,w2,w3> key
             TrigramC0N1N2 trigramN1N2 = new TrigramC0N1N2(trigram.getW1(), trigram.getW2(), trigram.getW3());
-            System.out.println("got new trigram in mapper: " + trigramN1N2);
             // create the <~,w2,w3> key
             TrigramC0N1N2 w2w3 = new TrigramC0N1N2("~", trigram.getW2(), trigram.getW3());
+            // create the <~,~,w3> key
             TrigramC0N1N2 w3 = new TrigramC0N1N2("~", "~", trigram.getW3());
             // save in counter the appearance of this words
             probabilityParameters.setN2(probabilityParameters.getN3());
             probabilityParameters.setN1(probabilityParameters.getN3());
-            //count the number of words in the corpus
+            // count the number of words in the corpus
             context.getCounter(C0N1N2Counter.c0Counter.TOTAL_WORDS).increment(probabilityParameters.getN3().get() * 3);
-            // count the <w1,w2,w3> and <w2,w3> <w3> appearances
+            // count the <w1,w2,w3>, <w2,w3> and <w3> appearances
             context.write(trigramN1N2, probabilityParameters);
             context.write(w2w3, probabilityParameters);
             context.write(w3, probabilityParameters);
@@ -51,7 +53,6 @@ public class C0N1N2Counter {
             updatedProbabilityParameters.setN2(new LongWritable(n2CountSum));
             updatedProbabilityParameters.setN1(new LongWritable(n1CountSSum));
             context.write(trigram, updatedProbabilityParameters);
-            System.out.println("finish combining local trigram: " + trigram.toString());
         }
     }
 
@@ -62,11 +63,11 @@ public class C0N1N2Counter {
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
+            // get C0 counter - number of word instances in corpus
             Configuration conf = context.getConfiguration();
             Cluster cluster = new Cluster(conf);
             Job currentJob = cluster.getJob(context.getJobID());
             C0.set(currentJob.getCounters().findCounter(C0N1N2Counter.c0Counter.TOTAL_WORDS).getValue());
-            System.out.println(C0);
         }
 
         @Override
@@ -79,19 +80,17 @@ public class C0N1N2Counter {
                 n2CountSum += probabilityParameters.getN2().get();
                 n1CountSum += probabilityParameters.getN1().get();
             }
-            // check if this is <~,w2,w3> or <w1,w2,w3> <~,~,w3>
+            // check if this is <~,w2,w3>, <w1,w2,w3> or <~,~,w3>
             // if <~,w2,w3>, we will update N2 for the next <w1,w2,w3>
             // if <~,~,w3> we will update N1 for next <w1,w2,w3>
             // else, we emit the saved N2 and the updatedProbabilityParameters
-            if (trigram.getW1().equals("~") && !trigram.getW2().equals("~")) { // <~,w2,w3>
+            if (trigram.getW1().equals("~") && !trigram.getW2().equals("~")) {   // <~,w2,w3>
                 this.N2.set(n2CountSum);
             }
-            else if(trigram.getW1().equals("~") && trigram.getW2().equals("~")) // <~,~,w3>
-            {
+            else if(trigram.getW1().equals("~") && trigram.getW2().equals("~")) {   // <~,~,w3>
                 this.N1.set(n1CountSum);
             }
             else {
-                System.out.println("reducer got new trigram <w1,w2,w3>: " + trigram);
                 assert updatedProbabilityParameters != null;
                 updatedProbabilityParameters.setN2(N2);
                 updatedProbabilityParameters.setN1(N1);
