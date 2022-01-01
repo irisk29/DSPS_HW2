@@ -48,8 +48,8 @@ The produced knowledge-base indicates for each pair of words the probability of 
 
 ## Scalability
 We considered the scalability matter by the following aspects:
-- no-memory requirement - Instead of saving certain data for trigrams in the memory, we split the calculations in a smart way that allows us to sort the key-value pairs. The records will always arrive in order that require only O(1) memory usage. No matter what size corpus will be, our program can handle it because it does not has any memory size assumptions.
-- Increasing the number of workers (if needed) - in order to speed up the proccess, we could increase the number of instances by our need.
+- no-memory requirement - Instead of saving certain data for trigrams in the memory, we split the calculations in way that allows us to sort the key-value pairs. The records will always arrive in order that requires only O(1) memory usage. No matter what the size of the corpus will be, our program can handle it because it does not have any memory size assumptions.
+- Increasing the number of workers (if needed) - in order to speed up the proccess, we could increase the number of instances by our need (with the limit of aws student account).
 
 ## Technical stuff
 - We used instance type of M5Xlarge for all instances.
