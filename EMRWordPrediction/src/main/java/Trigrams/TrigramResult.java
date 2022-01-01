@@ -1,5 +1,9 @@
 package Trigrams;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 public class TrigramResult extends AbstractTrigram{
     private double prob;
 
@@ -10,6 +14,18 @@ public class TrigramResult extends AbstractTrigram{
     public TrigramResult() {
         super();
         prob = 0.0;
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        super.readFields(in);
+        this.prob = in.readDouble();
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        super.write(out);
+        out.writeDouble(this.prob);
     }
 
     @Override
@@ -25,7 +41,7 @@ public class TrigramResult extends AbstractTrigram{
             return compareRes;
         compareRes = Double.compare(this.prob, otherRes.prob);
         if(compareRes != 0)
-            return compareRes;
+            return compareRes * (-1);
         return this.w3.compareTo(other.getW3());
     }
 
