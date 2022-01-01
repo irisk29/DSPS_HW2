@@ -15,8 +15,8 @@ The produced knowledge-base indicates for each pair of words the probability of 
       "log-path" : "<s3 log bucket path you created earlier>",
       "jar-path" : "<jar file location path in s3>",
       "main-class" : "<main class of the jar file>",
-      "num-of-instances" : "<number of instances to use. Can be MAX 19>",
-      "key-name" : "<name of the keyPair>"
+      "num-of-instances" : "<number of instances to use. Can be MAX 8>",
+      "key-name" : "<name of the keyPair for ec2 instances>"
     }
    ```
 5. run TrigramWordPrediction jar using the command `java -jar TrigramWordPrediction.jar`.
