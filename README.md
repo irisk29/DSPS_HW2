@@ -51,5 +51,8 @@ We considered the scalability matter by the following aspects:
 - no-memory requirement - Instead of saving certain data for trigrams in the memory, we split the calculations in way that allows us to sort the key-value pairs. The records will always arrive in order that requires only O(1) memory usage. No matter what the size of the corpus will be, our program can handle it because it does not have any memory size assumptions.
 - Increasing the number of workers (if needed) - in order to speed up the proccess, we could increase the number of instances by our need (with the limit of aws student account).
 
+## Output Files
+- with combiner: s3://trigramwordpredictionwithcombiner/outputStep3/
+- without combiner: s3://trigramwordpredictionwithoutcombiner/outputStep3/
 ## Technical stuff
 - We used instance type of M5Xlarge for all instances.
